@@ -40,7 +40,7 @@ if __name__ == '__main__':
     }
     url = "http://api.jh.zjut.edu.cn/student/scoresDetailZf.php?ip=164&username=" + config[0] + "&password=" + config[1] + "&year=" + \
           config[2] + "&term=" + config[3]
-    print(url)
+    #print(url)
     size = 0  # 现在已经出成绩的科目数量
     flag = 0  # 标记有没有成功查到过成绩
     while True:

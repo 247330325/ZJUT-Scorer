@@ -1,9 +1,9 @@
 import socket
-
 import requests
 import json
 import time
 import smtplib
+import copy
 from email.mime.text import MIMEText
 from email.header import Header
 
@@ -75,8 +75,9 @@ if __name__ == '__main__':
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/79.0.3945.88 Safari/537.36 Edg/79.0.309.54 "
     }
-    url = "http://api.jh.zjut.edu.cn/student/scoresZf.php?ip=164&username=" + config[0] + "&password=" + config[
-        1] + "&year=" + config[2] + "&term=" + config[3]
+    url = "http://api.jh.zjut.edu.cn/student/scoresDetailZf.php?ip=164&username=" + config[0] + "&password=" + config[1] + "&year=" + \
+          config[2] + "&term=" + config[3]
+    #print(url)
     size = 0  # 现在已经出成绩的科目数量
     flag = 0  # 标记有没有成功查到过成绩
     while True:
@@ -99,15 +100,27 @@ if __name__ == '__main__':
                 credit = 0
                 GP = 0
                 msg = ''
+                score_summary = {}#score_summary为目标字典
+                value = {}
+                '''
                 for each in decodedJSON["msg"]:
                     if each['kcxzmc'] != '任选课':
                         credit = credit + eval(each['xf'])
                         GP = GP + eval(each['xf']) * eval(each['jd'])
                     msg = msg + each['kcmc'] + '\t' + each['classscore'] + '\n'
                 GPA = GP / credit
-                msg = msg + "当前GPA：\t" + str(GPA)
-                sendmail(msg, config)
+                msg = msg + "当前GPA：\t" + str(GPA) + '\n'
+                print("yes")
+                #sendmail(msg, config)
                 size = len(decodedJSON["msg"])
+                '''
+                for each in decodedJSON["msg"]:
+                    if  not(score_summary.__contains__(each['kcmc'])):
+                        value.clear()
+                    value[each['xmblmc']] = each['xmcj']
+                    score_summary[each['kcmc']] = copy.deepcopy(value)
+            # print(len(decodedJSON["msg"]))
+            time.sleep(60)
         except requests.exceptions.ConnectionError as e:
             print('Network Error')
         except KeyError as e:

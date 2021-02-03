@@ -14,7 +14,7 @@ def sendmail(msg, config):
     mail_pass = config[6]
     sender = config[5]
     receivers = config[7]
-    message = MIMEText(msg)
+    message = getHTML(msg)
     message['From'] = Header('S-Server<score@zjut.edu.cn>', 'utf-8')
     message['To'] = Header(config[7] + '<' + config[7] + '>', 'utf-8')
     message['Subject'] = Header('出成绩了！', 'utf-8')
@@ -28,6 +28,43 @@ def sendmail(msg, config):
         print("邮箱账号或密码错误")
     except socket.gaierror:
         print("网络连接错误，请检查SMTP服务器配置")
+
+
+def getHTML(msg):
+    msg = msg.replace('\n', '</td>\n</tr>\n<tr>\n<td>')
+    msg = msg.replace('\t', '</td>\n<td>')
+    html = """
+<html lang="zh-cn">
+<head>
+    <style>
+        tr, td, th, table {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+<table>
+    <tr>
+        <th>
+            课程名称
+        </th>
+        <th>
+            成绩
+        </th>
+    </tr>
+    <tr>
+        <td>
+    """ + msg + """
+           </td>
+    </tr>
+</table>
+</body>
+</html>
+    """
+    print(html)
+    text_html = MIMEText(html, 'html', 'utf-8')
+    text_html["Content-Disposition"] = 'attachment; filename="scores.html"'
+    return text_html
 
 
 if __name__ == '__main__':
@@ -48,7 +85,6 @@ if __name__ == '__main__':
             times = 0
             content = requests.get(url, headers=headers).content.decode().encode("GBK")
             decodedJSON = json.loads(content)
-            #print(decodedJSON)
             while decodedJSON["status"] != "success":
                 print('查询错误')
                 content = requests.get(url, headers=headers).content.decode().encode("GBK")
@@ -91,3 +127,7 @@ if __name__ == '__main__':
             print('KeyError')
         except json.decoder.JSONDecodeError as e:
             print('JsonDecodeError')
+        except Exception as e:
+            print('error')
+        finally:
+            time.sleep(60)

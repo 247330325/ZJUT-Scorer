@@ -37,7 +37,7 @@ def get_gpa(msg):
             gp = gp + item[4] * item[5]
             credit = credit + item[4]
     if credit != 0:
-        return gp / credit
+        return round(gp / credit, 4)
     else:
         return 0
 

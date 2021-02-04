@@ -8,7 +8,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 
 
-def sendmail(message, config):
+def sendmail(subject, message, config):
     mail_host = config[4]
     mail_user = config[5]
     mail_pass = config[6]
@@ -16,7 +16,7 @@ def sendmail(message, config):
     receivers = config[7]
     message['From'] = Header('S-Server<score@zjut.edu.cn>', 'utf-8')
     message['To'] = Header(config[7] + '<' + config[7] + '>', 'utf-8')
-    message['Subject'] = Header('出成绩了！', 'utf-8')
+    message['Subject'] = Header(subject, 'utf-8')
     try:
         SMTPObj = smtplib.SMTP_SSL(mail_host, 465)
         SMTPObj.ehlo()
@@ -29,31 +29,43 @@ def sendmail(message, config):
         print("网络连接错误，请检查SMTP服务器配置")
 
 
+def get_gpa(msg):
+    return 5  # TODO 实现GPA计算
+
+
 def get_HTML(msg):
     rows = []
     for score in msg:
-        row = "<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td></tr>".format(
-            score[0], score[1], score[2], score[3], score[4], score[5], score[6])
+        row = "<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</tr>".format(score[0], score[1], score[2], score[3])
         rows.append(row)
-    html = """
-     <html lang="zh-cn">
-    <head>
-        <style>
-            tr, td, th, table {
-                border: 1px solid black;
-            }
-        </style>
-    </head>
-    <body>
-    <table>
+    gpa = get_gpa(msg)
+    html = """<html lang="zh-cn">
+<head>
+    <title>成绩明细</title>
+    <style>
+        tr, td, th, table {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+<table style='text-align: center'>
+    <tr>
+        <td>课程名称</td>
+        <td>平时成绩</td>
+        <td>期末成绩</td>
+        <td>总评</td>
+    </tr>
     """
     for row in rows:
         html = html + row
-    html = html + """
-</table>
-</body>
-</html>
-    """
+    html = html + """<tr>
+    <td>GPA</td>
+    <td colspan='3'>{0}</td>
+    </table>
+    </body>
+    </html>
+    """.format(gpa)
     print(html)
     text_html = MIMEText(html, 'html', 'utf-8')
     text_html["Content-Disposition"] = 'attachment; filename="scores.html"'
@@ -104,12 +116,22 @@ def get_score_detail(cfg):  # 返回成绩信息的res
 
 
 def get_gpa_info(cfg, res):  # 为res添加GPA信息
-
+    # '''
+    # for each in decodedJSON["msg"]:
+    #     if each['kcxzmc'] != '任选课':
+    #         credit = credit + eval(each['xf'])
+    #         GP = GP + eval(each['xf']) * eval(each['jd'])
+    #     msg = msg + each['kcmc'] + '\t' + each['classscore'] + '\n'
+    # GPA = GP / credit
+    # msg = msg + "当前GPA：\t" + str(GPA) + '\n'
+    # print("yes")
+    # #sendmail(msg, config)
+    # size = len(decodedJSON["msg"])
+    # '''
     return res  # TODO 实现功能
 
 
 def check_password(cfg):  # 判断密码是否正确，正确返回True
-
     return True  # TODO 实现功能
 
 
@@ -126,14 +148,14 @@ if __name__ == '__main__':
         exit(0)
     score_list = get_score_detail(config)
     scores = get_gpa_info(config, score_list)  # 加上GPA信息
-    sendmail(get_HTML(scores), config)
+    sendmail("服务启动成功", get_HTML(scores), config)
     size = len(score_list)  # 获取初始数据
     while True:
         try:
             new_score_list = get_score_detail(config)
             if len(new_score_list) != size:  # 出新成绩了
                 scores = get_gpa_info(config, new_score_list)  # 加上GPA信息
-                sendmail(get_HTML(scores), config)
+                sendmail("出成绩了！", get_HTML(scores), config)
         except requests.exceptions.ConnectionError as e:
             error('Network Error')
         except KeyError as e:
@@ -144,26 +166,3 @@ if __name__ == '__main__':
             error('error')
         finally:
             time.sleep(60)
-# '''
-# for each in decodedJSON["msg"]:
-#     if each['kcxzmc'] != '任选课':
-#         credit = credit + eval(each['xf'])
-#         GP = GP + eval(each['xf']) * eval(each['jd'])
-#     msg = msg + each['kcmc'] + '\t' + each['classscore'] + '\n'
-# GPA = GP / credit
-# msg = msg + "当前GPA：\t" + str(GPA) + '\n'
-# print("yes")
-# #sendmail(msg, config)
-# size = len(decodedJSON["msg"])
-# '''
-
-# except requests.exceptions.ConnectionError as e:
-#     error('Network Error')
-# except KeyError as e:
-#     error('KeyError')
-# except json.decoder.JSONDecodeError as e:
-#     error('JsonDecodeError')
-# # except Exception as e:
-# #     error('error')
-# finally:
-#     time.sleep(60)
